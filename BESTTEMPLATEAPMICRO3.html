@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Split-Screen Quiz Game</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+    .team {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .team.left {
+      background-color: lightblue;
+    }
+    .team.right {
+      background-color: lightgreen;
+    }
+    .question {
+      text-align: center;
+      padding: 20px;
+      background-color: #f8f9fa;
+      position: absolute;
+      width: 100%;
+      top: 10%;
+      font-size: 24px;
+      font-weight: bold;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .scoreboard {
+      position: absolute;
+      top: 2%;
+      width: 100%;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .choices button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+    }
+    .choices button:hover {
+      background-color: #ddd;
+    }
+    .choices button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="scoreboard">Team 1: 0 | Team 2: 0</div>
+  <div class="question">What happens to the equilibrium price if demand increases?</div>
+  <div class="container">
+    <div class="team left">
+      <h2>Team 1</h2>
+      <div class="choices" id="team1-choices">
+        <button onclick="checkAnswer('team1', 'A')">A. Decreases</button>
+        <button onclick="checkAnswer('team1', 'B')">B. Increases</button>
+        <button onclick="checkAnswer('team1', 'C')">C. Stays the same</button>
+        <button onclick="checkAnswer('team1', 'D')">D. None</button>
+      </div>
+    </div>
+    <div class="team right">
+      <h2>Team 2</h2>
+      <div class="choices" id="team2-choices">
+        <button onclick="checkAnswer('team2', '1')">1. Decreases</button>
+        <button onclick="checkAnswer('team2', '2')">2. Increases</button>
+        <button onclick="checkAnswer('team2', '3')">3. Stays the same</button>
+        <button onclick="checkAnswer('team2', '4')">4. None</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+const questions = [
+  {
+    question: "If the government imposes a price floor above the equilibrium price, what happens in the market?",
+    choicesTeam1: [
+      "A. A shortage will occur",
+      "B. A surplus will occur",
+      "C. The market will remain in equilibrium",
+      "D. Demand will increase"
+    ],
+    choicesTeam2: [
+      "1. A shortage will occur",
+      "2. A surplus will occur",
+      "3. The market will remain in equilibrium",
+      "4. Demand will increase"
+    ],
+    correctTeam1: "B",
+    correctTeam2: "2",
+    explanation: "A price floor above equilibrium creates a surplus because quantity supplied exceeds quantity demanded."
+  },
+  {
+    question: "An increase in the cost of production shifts which curve, and in which direction?",
+    choicesTeam1: [
+      "A. The demand curve shifts left",
+      "B. The supply curve shifts left",
+      "C. The demand curve shifts right",
+      "D. The supply curve shifts right"
+    ],
+    choicesTeam2: [
+      "1. The demand curve shifts left",
+      "2. The supply curve shifts left",
+      "3. The demand curve shifts right",
+      "4. The supply curve shifts right"
+    ],
+    correctTeam1: "B",
+    correctTeam2: "2",
+    explanation: "Higher production costs reduce supply, shifting the supply curve to the left."
+  },
+  {
+    question: "If demand increases while supply remains constant, what happens to equilibrium price and quantity?",
+    choicesTeam1: [
+      "A. Price decreases, quantity decreases",
+      "B. Price increases, quantity increases",
+      "C. Price decreases, quantity increases",
+      "D. Price increases, quantity decreases"
+    ],
+    choicesTeam2: [
+      "1. Price decreases, quantity decreases",
+      "2. Price increases, quantity increases",
+      "3. Price decreases, quantity increases",
+      "4. Price increases, quantity decreases"
+    ],
+    correctTeam1: "B",
+    correctTeam2: "2",
+    explanation: "An increase in demand shifts the demand curve rightward, raising both price and quantity."
+  },
+  {
+    question: "A technological improvement in production causes what kind of shift?",
+    choicesTeam1: [
+      "A. Supply curve shifts left",
+      "B. Supply curve shifts right",
+      "C. Demand curve shifts left",
+      "D. Demand curve shifts right"
+    ],
+    choicesTeam2: [
+      "1. Supply curve shifts left",
+      "2. Supply curve shifts right",
+      "3. Demand curve shifts left",
+      "4. Demand curve shifts right"
+    ],
+    correctTeam1: "B",
+    correctTeam2: "2",
+    explanation: "Technological improvements reduce production costs, shifting the supply curve to the right."
+  },
+  {
+    question: "If the price of a substitute good increases, what happens to the demand curve for the original good?",
+    choicesTeam1: [
+      "A. It shifts left",
+      "B. It shifts right",
+      "C. It remains unchanged",
+      "D. It becomes vertical"
+    ],
+    choicesTeam2: [
+      "1. It shifts left",
+      "2. It shifts right",
+      "3. It remains unchanged",
+      "4. It becomes vertical"
+    ],
+    correctTeam1: "B",
+    correctTeam2: "2",
+    explanation: "An increase in the price of a substitute good increases demand for the original good, shifting its demand curve right."
+  },
+  {
+    question: "If both demand and supply increase simultaneously, what can we predict about the new equilibrium price and quantity?",
+    choicesTeam1: [
+      "A. Price will increase, quantity is indeterminate",
+      "B. Quantity will increase, price is indeterminate",
+      "C. Both price and quantity will increase",
+      "D. Both price and quantity will decrease"
+    ],
+    choicesTeam2: [
+      "1. Price will increase, quantity is indeterminate",
+      "2. Quantity will increase, price is indeterminate",
+      "3. Both price and quantity will increase",
+      "4. Both price and quantity will decrease"
+    ],
+    correctTeam1: "B",
+    correctTeam2: "2",
+    explanation: "When both demand and supply increase, quantity increases, but the change in price depends on the magnitude of the shifts."
+  },
+  {
+    question: "If a tax is imposed on producers, what happens to the supply curve?",
+    choicesTeam1: [
+      "A. Shifts left",
+      "B. Shifts right",
+      "C. Remains constant",
+      "D. Becomes vertical"
+    ],
+    choicesTeam2: [
+      "1. Shifts left",
+      "2. Shifts right",
+      "3. Remains constant",
+      "4. Becomes vertical"
+    ],
+    correctTeam1: "A",
+    correctTeam2: "1",
+    explanation: "A tax increases production costs, reducing supply and shifting the supply curve leftward."
+  },
+  {
+    question: "If the government imposes a binding price ceiling, what happens in the market?",
+    choicesTeam1: [
+      "A. A shortage occurs",
+      "B. A surplus occurs",
+      "C. The market remains in equilibrium",
+      "D. Supply increases"
+    ],
+    choicesTeam2: [
+      "1. A shortage occurs",
+      "2. A surplus occurs",
+      "3. The market remains in equilibrium",
+      "4. Supply increases"
+    ],
+    correctTeam1: "A",
+    correctTeam2: "1",
+    explanation: "A binding price ceiling is set below equilibrium price, causing quantity demanded to exceed quantity supplied, creating a shortage."
+  },
+  {
+    question: "If the government provides a subsidy to producers, what happens to the equilibrium price and quantity?",
+    choicesTeam1: [
+      "A. Price increases, quantity decreases",
+      "B. Price decreases, quantity increases",
+      "C. Price and quantity both decrease",
+      "D. Price and quantity both increase"
+    ],
+    choicesTeam2: [
+      "1. Price increases, quantity decreases",
+      "2. Price decreases, quantity increases",
+      "3. Price and quantity both decrease",
+      "4. Price and quantity both increase"
+    ],
+    correctTeam1: "B",
+    correctTeam2: "2",
+    explanation: "A subsidy reduces production costs, increasing supply. This shifts the supply curve rightward, lowering price and increasing quantity."
+  },
+  {
+    question: "If consumer income increases and the good is normal, what happens to demand?",
+    choicesTeam1: [
+      "A. Shifts left",
+      "B. Shifts right",
+      "C. Remains constant",
+      "D. Becomes vertical"
+    ],
+    choicesTeam2: [
+      "1. Shifts left",
+      "2. Shifts right",
+      "3. Remains constant",
+      "4. Becomes vertical"
+    ],
+    correctTeam1: "B",
+    correctTeam2: "2",
+    explanation: "For a normal good, an increase in consumer income leads to a rightward shift in demand."
+  },
+  {
+    question: "If the price of a complementary good decreases, what happens to demand for the original good?",
+    choicesTeam1: [
+      "A. It shifts left",
+      "B. It shifts right",
+      "C. It remains constant",
+      "D. It becomes vertical"
+    ],
+    choicesTeam2: [
+      "1. It shifts left",
+      "2. It shifts right",
+      "3. It remains constant",
+      "4. It becomes vertical"
+    ],
+    correctTeam1: "B",
+    correctTeam2: "2",
+    explanation: "A decrease in the price of a complementary good increases demand for the original good, shifting its demand curve right."
+  },
+  {
+    question: "A decrease in the number of sellers in a market will cause which curve to shift, and in which direction?",
+    choicesTeam1: [
+      "A. Supply shifts left",
+      "B. Supply shifts right",
+      "C. Demand shifts left",
+      "D. Demand shifts right"
+    ],
+    choicesTeam2: [
+      "1. Supply shifts left",
+      "2. Supply shifts right",
+      "3. Demand shifts left",
+      "4. Demand shifts right"
+    ],
+    correctTeam1: "A",
+    correctTeam2: "1",
+    explanation: "A decrease in the number of sellers reduces supply, shifting the supply curve left."
+  },
+  {
+    question: "Which of the following causes a movement along the demand curve, not a shift?",
+    choicesTeam1: [
+      "A. Change in consumer income",
+      "B. Change in price of the good",
+      "C. Change in consumer preferences",
+      "D. Change in population"
+    ],
+    choicesTeam2: [
+      "1. Change in consumer income",
+      "2. Change in price of the good",
+      "3. Change in consumer preferences",
+      "4. Change in population"
+    ],
+    correctTeam1: "B",
+    correctTeam2: "2",
+    explanation: "A change in the price of the good itself results in movement along the demand curve, not a shift."
+  },
+  {
+   question: "If the price of labor decreases, what happens to the market supply curve for goods produced using that labor?",
+    choicesTeam1: [
+      "A. Shifts left",
+      "B. Shifts right",
+      "C. Remains constant",
+      "D. Becomes vertical"
+    ],
+    choicesTeam2: [
+      "1. Shifts left",
+      "2. Shifts right",
+      "3. Remains constant",
+      "4. Becomes vertical"
+    ],
+    correctTeam1: "B",
+    correctTeam2: "2",
+    explanation: "A decrease in labor costs reduces production costs, increasing supply and shifting the supply curve rightward."
+  },
+  {
+    question: "If both demand and supply decrease, what can we predict about equilibrium price and quantity?",
+    choicesTeam1: [
+      "A. Price will decrease, quantity is indeterminate",
+      "B. Quantity will decrease, price is indeterminate",
+      "C. Both price and quantity will decrease",
+      "D. Both price and quantity will increase"
+    ],
+    choicesTeam2: [
+      "1. Price will decrease, quantity is indeterminate",
+      "2. Quantity will decrease, price is indeterminate",
+      "3. Both price and quantity will decrease",
+      "4. Both price and quantity will increase"
+    ],
+    correctTeam1: "B",
+    correctTeam2: "2",
+    explanation: "When both demand and supply decrease, quantity decreases, but the price change depends on the relative magnitude of the shifts."
+  },
+  {
+    question: "If an effective quota is imposed on the market, what happens to the supply curve?",
+    choicesTeam1: [
+      "A. Becomes vertical at the quota quantity",
+      "B. Shifts left",
+      "C. Shifts right",
+      "D. Remains unchanged"
+    ],
+    choicesTeam2: [
+      "1. Becomes vertical at the quota quantity",
+      "2. Shifts left",
+      "3. Shifts right",
+      "4. Remains unchanged"
+    ],
+    correctTeam1: "A",
+    correctTeam2: "1",
+    explanation: "An effective quota limits the quantity supplied, making the supply curve vertical at the quota quantity."
+  }
+];
+
+
+    let currentQuestionIndex = 0;
+    let team1Score = 0;
+    let team2Score = 0;
+    let team1Answered = false;
+    let team2Answered = false;
+
+    function loadQuestion() {
+      if (currentQuestionIndex >= questions.length) {
+        endGame();
+        return;
+      }
+
+      const question = questions[currentQuestionIndex];
+      document.querySelector('.question').innerText = question.question;
+
+      const team1Buttons = document.querySelectorAll('#team1-choices button');
+      const team2Buttons = document.querySelectorAll('#team2-choices button');
+
+      team1Buttons.forEach((btn, idx) => {
+        btn.innerText = question.choicesTeam1[idx];
+        btn.disabled = false;
+      });
+
+      team2Buttons.forEach((btn, idx) => {
+        btn.innerText = question.choicesTeam2[idx];
+        btn.disabled = false;
+      });
+
+      team1Answered = false;
+      team2Answered = false;
+    }
+
+function checkAnswer(team, answer) {
+  const question = questions[currentQuestionIndex];
+  let isCorrect = false;
+
+  if (team === "team1" && !team1Answered) {
+    team1Answered = true;
+    if (answer === question.correctTeam1) {
+      team1Score++;
+      isCorrect = true;
+      alert("Team 1 answered correctly!");
+    } else {
+      alert("Team 1 is incorrect.");
+    }
+  } else if (team === "team2" && !team2Answered) {
+    team2Answered = true;
+    if (answer === question.correctTeam2) {
+      team2Score++;
+      isCorrect = true;
+      alert("Team 2 answered correctly!");
+    } else {
+      alert("Team 2 is incorrect.");
+    }
+  }
+
+  updateScoreboard();
+
+  // Automatically load the next question if answered correctly
+  if (isCorrect) {
+    currentQuestionIndex++;
+    loadQuestion();
+  } else if (team1Answered && team2Answered) {
+    // Show explanation if both teams answered incorrectly
+    if (answer !== question.correctTeam1 && answer !== question.correctTeam2) {
+      alert("Explanation: " + question.explanation);
+    }
+    currentQuestionIndex++;
+    loadQuestion();
+  }
+}
+
+    function updateScoreboard() {
+      document.querySelector('.scoreboard').innerText = `Team 1: ${team1Score} | Team 2: ${team2Score}`;
+    }
+
+    function endGame() {
+      const winner = team1Score > team2Score ? "Team 1" : team2Score > team1Score ? "Team 2" : "No one";
+      alert(`Game Over! ${winner} wins!\nFinal Score: Team 1: ${team1Score} | Team 2: ${team2Score}`);
+    }
+
+    // Load the first question
+    loadQuestion();
+  </script>
+</body>
+</html>
